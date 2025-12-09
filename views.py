@@ -43,13 +43,8 @@ def reader(novel_id):
         chap_idx = int(chap_idx) if chap_idx is not None else None
     except ValueError:
         chap_idx = None
-    page = request.args.get('page', None)
-    try:
-        page = int(page) if page is not None else None
-        if page is not None and page < 1:
-            page = 1
-    except ValueError:
-        page = None
+    # 章节切换时 page 始终为 None
+    page = None
     # 可扩展 user 标识，当前用 default
     title, page_text, chapters, current_chapter, page, total_pages, node = services.get_novel_page(novel_id, chap_idx, page, user='default')
     if title is None:

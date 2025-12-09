@@ -76,13 +76,12 @@ def get_novel_page(novel_id, chapter_idx, page_num=None, page_size=None, user='d
             except Exception:
                 pass
         chapters = utils.extract_chapters(content)
-    # 自动跳转到历史节点
+    # 仅在未指定章节时自动跳转到历史节点
     node = None
-    if chapter_idx is None or page_num is None:
+    if chapter_idx is None:
         node = utils_read_record.get_read_node(user, novel_id)
         if node:
             chapter_idx = node.get('chapter_idx', 0)
-            page_num = node.get('page_num', 1)
     if chapter_idx is None or chapter_idx < 0 or chapter_idx >= len(chapters):
         chapter_idx = 0
     chap = chapters[chapter_idx]
