@@ -65,7 +65,7 @@ def auto_split_into_chapters(text: str, chunk_size: int = 10000):
             chapter_end = end
         idx += 1
         title = f'第{idx}节'
-        chapters.append({'title': titlelist-group-item, 'start': pos, 'end': chapter_end})
+        chapters.append({'title': title, 'start': pos, 'end': chapter_end})
         pos = chapter_end
     return chapters
 

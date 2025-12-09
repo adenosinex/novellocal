@@ -1,3 +1,17 @@
+import utils_mark
+# 文件打分
+def mark_novel(user, novel_id, score):
+    conn = utils.get_db()
+    cur = conn.execute('SELECT filename, path FROM novels WHERE id = ?', (novel_id,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return False
+    utils_mark.write_mark(user, novel_id, row['filename'], row['path'], score)
+    return True
+
+def get_novel_mark(user, novel_id):
+    return utils_mark.get_mark(user, novel_id)
 import utils_read_record
 from pathlib import Path
 import utils
