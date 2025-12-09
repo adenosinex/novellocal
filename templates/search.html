@@ -3,31 +3,45 @@
   <head>
     <meta charset="utf-8">
     <title>搜索结果</title>
+    {% include '_bootstrap_head.html' %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
-  <body>
-    <h1>搜索结果</h1>
-    <p><a href="{{ url_for('main.home') }}">返回</a></p>
-    <form method="get" action="{{ url_for('main.search') }}" style="margin-bottom:12px;">
-      <input name="q" value="{{ q }}" placeholder="输入文件名或前100字关键字" style="width:260px;">
-      <input type="hidden" name="mode" value="all">
-      <button type="submit">全部</button>
-      <button type="submit" formaction="{{ url_for('main.search') }}?mode=filename&q={{ q }}">只文件名</button>
-      <button type="submit" formaction="{{ url_for('main.search') }}?mode=text&q={{ q }}">只前100字</button>
-    </form>
-    <p>当前筛选：
-      {% if mode == 'filename' %}只文件名{% elif mode == 'text' %}只前100字{% else %}全部{% endif %}
-    </p>
-    {% if results %}
-      <ul>
-      {% for row in results %}
-        <li>
-          <a href="{{ url_for('main.reader', novel_id=row['id']) }}">{{ row['filename'] }}</a>
-          — {{ row['first100'] }}
-        </li>
-      {% endfor %}
-      </ul>
-    {% else %}
-      <p>未找到匹配项。</p>
-    {% endif %}
+  <body class="bg-light">
+    <div class="container py-3">
+      <h1 class="mb-4 text-center">搜索结果</h1>
+      <p><a href="{{ url_for('main.home') }}" class="btn btn-link">返回首页</a></p>
+      <form method="get" action="{{ url_for('main.search') }}" class="row g-2 mb-3">
+        <div class="col-md-9 col-12">
+          <input name="q" value="{{ q }}" class="form-control" placeholder="输入文件名或前100字关键字">
+        </div>
+        <input type="hidden" name="mode" value="all">
+        <div class="col-md-3 col-12 d-flex gap-1">
+          <button type="submit" class="btn btn-success flex-fill">全部</button>
+          <button type="submit" formaction="{{ url_for('main.search') }}?mode=filename&q={{ q }}" class="btn btn-primary flex-fill">只文件名</button>
+          <button type="submit" formaction="{{ url_for('main.search') }}?mode=text&q={{ q }}" class="btn btn-warning flex-fill">只前100字</button>
+        </div>
+      </form>
+      <p>当前筛选：
+        <span class="badge bg-secondary">
+          {% if mode == 'filename' %}只文件名{% elif mode == 'text' %}只前100字{% else %}全部{% endif %}
+        </span>
+      </p>
+      <div class="card">
+        <div class="card-body">
+          {% if results %}
+            <ul class="list-group">
+            {% for row in results %}
+              <li class="list-group-item">
+                <a href="{{ url_for('main.reader', novel_id=row['id']) }}">{{ row['filename'] }}</a>
+                — {{ row['first100'] }}
+              </li>
+            {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">未找到匹配项。</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </body>
 </html>

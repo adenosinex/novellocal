@@ -3,51 +3,74 @@
   <head>
     <meta charset="utf-8">
     <title>小说阅读器 - 索引与搜索</title>
+    {% include '_bootstrap_head.html' %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
   </head>
-  <body>
-    <h1>小说阅读器</h1>
-    {% with messages = get_flashed_messages(with_categories=true) %}
-      {% if messages %}
-        <ul>
-        {% for category, msg in messages %}
-          <li><strong>{{ category }}</strong>: {{ msg }}</li>
-        {% endfor %}
-        </ul>
-      {% endif %}
-    {% endwith %}
+  <body class="bg-light">
+    <div class="container py-3">
+      <h1 class="mb-4 text-center">小说阅读器</h1>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          <div class="alert alert-info">
+            {% for category, msg in messages %}
+              <div><strong>{{ category }}</strong>: {{ msg }}</div>
+            {% endfor %}
+          </div>
+        {% endif %}
+      {% endwith %}
 
-    <h2>索引文件 / 目录</h2>
-    <form method="post" action="{{ url_for('main.index_route') }}">
-      <label>文件名、目录或路径（相对路径会被视为 `novels/` 下的相对路径）:</label>
-      <input name="filename" placeholder="example.txt 或 子目录/example.txt 或 C:\\path\\to\\dir">
-      <button type="submit">索引文件</button>
-    </form>
-    <form method="post" action="{{ url_for('main.index_route') }}" style="margin-top:8px;">
-      <input type="hidden" name="filename" value="">
-      <button type="submit">索引 `novels/` 中所有 .txt 文件</button>
-    </form>
+      <div class="card mb-4">
+        <div class="card-header">索引文件 / 目录</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('main.index_route') }}" class="row g-2">
+            <div class="col-md-9 col-12">
+              <input name="filename" class="form-control" placeholder="example.txt 或 子目录/example.txt 或 C:\\path\\to\\dir">
+            </div>
+            <div class="col-md-3 col-12">
+              <button type="submit" class="btn btn-primary w-100">索引文件</button>
+            </div>
+          </form>
+          <form method="post" action="{{ url_for('main.index_route') }}" class="mt-2">
+            <input type="hidden" name="filename" value="">
+            <button type="submit" class="btn btn-secondary w-100">索引 novels/ 中所有 .txt 文件</button>
+          </form>
+        </div>
+      </div>
 
-    <h2>搜索</h2>
-    <form method="get" action="{{ url_for('main.search') }}">
-      <input name="q" placeholder="输入文件名或前100字关键字" style="width:260px;">
-      <button type="submit">搜索</button>
-    </form>
+      <div class="card mb-4">
+        <div class="card-header">搜索</div>
+        <div class="card-body">
+          <form method="get" action="{{ url_for('main.search') }}" class="row g-2">
+            <div class="col-md-9 col-12">
+              <input name="q" class="form-control" placeholder="输入文件名或前100字关键字">
+            </div>
+            <div class="col-md-3 col-12">
+              <button type="submit" class="btn btn-success w-100">搜索</button>
+            </div>
+          </form>
+        </div>
+      </div>
 
-    <p>请把要索引的文本文件放到目录：<code>{{"novels"}}</code>，或填写文件路径进行单个索引。</p>
-    
-    <h2>已索引小说</h2>
-    {% if novels %}
-      <ul>
-      {% for n in novels %}
-        <li>
-          <a href="{{ url_for('main.reader', novel_id=n['id']) }}">{{ n['filename'] }}</a>
-          — {{ n['first100'] }}
-          <small>（添加: {{ n['added_at'] }}）</small>
-        </li>
-      {% endfor %}
-      </ul>
-    {% else %}
-      <p>尚无已索引小说。先索引一些文件吧。</p>
-    {% endif %}
+      <p class="text-muted">请把要索引的文本文件放到目录：<code>{{"novels"}}</code>，或填写文件路径进行单个索引。</p>
+
+      <div class="card">
+        <div class="card-header">已索引小说</div>
+        <div class="card-body">
+          {% if novels %}
+            <ul class="list-group">
+            {% for n in novels %}
+              <li class="list-group-item">
+                <a href="{{ url_for('main.reader', novel_id=n['id']) }}">{{ n['filename'] }}</a>
+                — {{ n['first100'] }}
+                <small class="text-muted">（添加: {{ n['added_at'] }}）</small>
+              </li>
+            {% endfor %}
+            </ul>
+          {% else %}
+            <p class="text-muted">尚无已索引小说。先索引一些文件吧。</p>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </body>
 </html>

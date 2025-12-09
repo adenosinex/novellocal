@@ -3,42 +3,53 @@
   <head>
     <meta charset="utf-8">
     <title>{{ title }}</title>
+    {% include '_bootstrap_head.html' %}
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       pre { white-space: pre-wrap; word-wrap: break-word; }
     </style>
   </head>
-  <body>
-    <h1>{{ title }}</h1>
-    <p><a href="{{ url_for('main.home') }}">返回</a></p>
-
-    <div style="display:flex; gap:16px; align-items:flex-start;">
-      <div style="min-width:200px; max-width:300px;">
-        <h3>目录</h3>
-        <ul>
-          {% for c in chapters %}
-            <li>
-              {% if loop.index0 == current_chapter %}
-                <strong>{{ loop.index }}. {{ c.title }}</strong>
-              {% else %}
-                <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ loop.index0 }}&page=1">{{ loop.index }}. {{ c.title }}</a>
-              {% endif %}
-            </li>
-          {% endfor %}
-        </ul>
-      </div>
-
-      <div style="flex:1;">
-        <h3>{{ chapters[current_chapter].title if chapters else '章节' }}</h3>
-        <pre>{{ content }}</pre>
-
-        <div style="margin-top:12px;">
-          {% if page > 1 %}
-            <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page-1 }}">上一页</a>
-          {% endif %}
-          <span> 第 {{ page }} / {{ total_pages }} 页 </span>
-          {% if page < total_pages %}
-            <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page+1 }}">下一页</a>
-          {% endif %}
+  <body class="bg-light">
+    <div class="container py-3">
+      <h1 class="mb-4 text-center">{{ title }}</h1>
+      <p><a href="{{ url_for('main.home') }}" class="btn btn-link">返回首页</a></p>
+      <div class="row">
+        <div class="col-md-3 col-12 mb-3">
+          <div class="card">
+            <div class="card-header">目录</div>
+            <ul class="list-group list-group-flush">
+              {% for c in chapters %}
+                <li class="list-group-item {% if loop.index0 == current_chapter %}active{% endif %}">
+                  {% if loop.index0 == current_chapter %}
+                    <strong>{{ loop.index }}. {{ c.title }}</strong>
+                  {% else %}
+                    <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ loop.index0 }}&page=1">{{ loop.index }}. {{ c.title }}</a>
+                  {% endif %}
+                </li>
+              {% endfor %}
+            </ul>
+          </div>
+        </div>
+        <div class="col-md-9 col-12">
+          <div class="card">
+            <div class="card-header">{{ chapters[current_chapter].title if chapters else '章节' }}</div>
+            <div class="card-body">
+              <pre class="mb-3">{{ content }}</pre>
+              <div class="d-flex justify-content-between align-items-center">
+                {% if page > 1 %}
+                  <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page-1 }}" class="btn btn-outline-primary">上一页</a>
+                {% else %}
+                  <span></span>
+                {% endif %}
+                <span>第 {{ page }} / {{ total_pages }} 页</span>
+                {% if page < total_pages %}
+                  <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page+1 }}" class="btn btn-outline-primary">下一页</a>
+                {% else %}
+                  <span></span>
+                {% endif %}
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
