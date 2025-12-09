@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <title>小说阅读器 - 索引与搜索</title>
+  </head>
+  <body>
+    <h1>小说阅读器</h1>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% if messages %}
+        <ul>
+        {% for category, msg in messages %}
+          <li><strong>{{ category }}</strong>: {{ msg }}</li>
+        {% endfor %}
+        </ul>
+      {% endif %}
+    {% endwith %}
+
+    <h2>索引文件 / 目录</h2>
+    <form method="post" action="{{ url_for('index_route') }}">
+      <label>文件名、目录或路径（相对路径会被视为 `novels/` 下的相对路径）:</label>
+      <input name="filename" placeholder="example.txt 或 子目录/example.txt 或 C:\\path\\to\\dir">
+      <button type="submit">索引文件</button>
+    </form>
+    <form method="post" action="{{ url_for('index_route') }}" style="margin-top:8px;">
+      <input type="hidden" name="filename" value="">
+      <button type="submit">索引 `novels/` 中所有 .txt 文件</button>
+    </form>
+
+    <h2>搜索</h2>
+    <form method="get" action="{{ url_for('search') }}">
+      <div>
+        <label>按文件名搜索:</label>
+        <input name="q_filename" placeholder="文件名关键字">
+      </div>
+      <div>
+        <label>按前100字搜索:</label>
+        <input name="q_text" placeholder="前100字中出现的关键字">
+      </div>
+      <button type="submit">搜索</button>
+    </form>
+
+    <p>请把要索引的文本文件放到目录：<code>{{"novels"}}</code>，或填写文件路径进行单个索引。</p>
+  </body>
+</html>

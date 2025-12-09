@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8">
+    <title>搜索结果</title>
+  </head>
+  <body>
+    <h1>搜索结果</h1>
+    <p><a href="{{ url_for('home') }}">返回</a></p>
+    <p>按文件名: {{ q_filename }} | 按前100字: {{ q_text }}</p>
+    {% if results %}
+      <ul>
+      {% for row in results %}
+        <li>
+          <a href="{{ url_for('reader', novel_id=row['id']) }}">{{ row['filename'] }}</a>
+          — {{ row['first100'] }}
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p>未找到匹配项。</p>
+    {% endif %}
+  </body>
+</html>
