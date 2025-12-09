@@ -42,7 +42,7 @@ def search_novels(q_filename, q_text):
         clauses.append('first100 LIKE ?')
         params.append(f'%{q_text}%')
     if clauses:
-        sql += ' WHERE ' + ' AND '.join(clauses)
+        sql += ' WHERE ' + ' OR '.join(clauses)
     sql += ' ORDER BY added_at DESC LIMIT 200'
     conn = utils.get_db()
     cur = conn.execute(sql, params)

@@ -29,14 +29,7 @@
 
     <h2>搜索</h2>
     <form method="get" action="{{ url_for('main.search') }}">
-      <div>
-        <label>按文件名搜索:</label>
-        <input name="q_filename" placeholder="文件名关键字">
-      </div>
-      <div>
-        <label>按前100字搜索:</label>
-        <input name="q_text" placeholder="前100字中出现的关键字">
-      </div>
+      <input name="q" placeholder="输入文件名或前100字关键字" style="width:260px;">
       <button type="submit">搜索</button>
     </form>
 

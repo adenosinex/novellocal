@@ -24,10 +24,16 @@ def index_route():
 
 @bp.route('/search')
 def search():
-    q_filename = request.args.get('q_filename', '').strip()
-    q_text = request.args.get('q_text', '').strip()
-    results = services.search_novels(q_filename, q_text)
-    return render_template('search.html', results=results, q_filename=q_filename, q_text=q_text)
+    q = request.args.get('q', '').strip()
+    mode = request.args.get('mode', 'all')
+    # 默认全部搜索
+    if mode == 'filename':
+        results = services.search_novels(q, '')
+    elif mode == 'text':
+        results = services.search_novels('', q)
+    else:
+        results = services.search_novels(q, q)
+    return render_template('search.html', results=results, q=q, mode=mode)
 
 
 @bp.route('/reader/<int:novel_id>')

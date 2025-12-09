@@ -7,7 +7,16 @@
   <body>
     <h1>搜索结果</h1>
     <p><a href="{{ url_for('main.home') }}">返回</a></p>
-    <p>按文件名: {{ q_filename }} | 按前100字: {{ q_text }}</p>
+    <form method="get" action="{{ url_for('main.search') }}" style="margin-bottom:12px;">
+      <input name="q" value="{{ q }}" placeholder="输入文件名或前100字关键字" style="width:260px;">
+      <input type="hidden" name="mode" value="all">
+      <button type="submit">全部</button>
+      <button type="submit" formaction="{{ url_for('main.search') }}?mode=filename&q={{ q }}">只文件名</button>
+      <button type="submit" formaction="{{ url_for('main.search') }}?mode=text&q={{ q }}">只前100字</button>
+    </form>
+    <p>当前筛选：
+      {% if mode == 'filename' %}只文件名{% elif mode == 'text' %}只前100字{% else %}全部{% endif %}
+    </p>
     {% if results %}
       <ul>
       {% for row in results %}
