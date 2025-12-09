@@ -17,18 +17,18 @@
     {% endwith %}
 
     <h2>索引文件 / 目录</h2>
-    <form method="post" action="{{ url_for('index_route') }}">
+    <form method="post" action="{{ url_for('main.index_route') }}">
       <label>文件名、目录或路径（相对路径会被视为 `novels/` 下的相对路径）:</label>
       <input name="filename" placeholder="example.txt 或 子目录/example.txt 或 C:\\path\\to\\dir">
       <button type="submit">索引文件</button>
     </form>
-    <form method="post" action="{{ url_for('index_route') }}" style="margin-top:8px;">
+    <form method="post" action="{{ url_for('main.index_route') }}" style="margin-top:8px;">
       <input type="hidden" name="filename" value="">
       <button type="submit">索引 `novels/` 中所有 .txt 文件</button>
     </form>
 
     <h2>搜索</h2>
-    <form method="get" action="{{ url_for('search') }}">
+    <form method="get" action="{{ url_for('main.search') }}">
       <div>
         <label>按文件名搜索:</label>
         <input name="q_filename" placeholder="文件名关键字">
@@ -47,7 +47,7 @@
       <ul>
       {% for n in novels %}
         <li>
-          <a href="{{ url_for('reader', novel_id=n['id']) }}">{{ n['filename'] }}</a>
+          <a href="{{ url_for('main.reader', novel_id=n['id']) }}">{{ n['filename'] }}</a>
           — {{ n['first100'] }}
           <small>（添加: {{ n['added_at'] }}）</small>
         </li>
