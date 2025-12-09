@@ -93,7 +93,9 @@
             {% endif %}
           {% endif %}
         </div>
+      
         {% if current_chapter == 0 %}
+          <a href="{{ url_for('main.download_full', novel_id=novel_id) }}" class="btn btn-sm btn-success ms-2">下载全文</a>
           {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
               <div class="mt-2">

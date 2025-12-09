@@ -1,3 +1,25 @@
+# 按起止位置读取章节内容
+def read_chapter_text(novel_id, start, end):
+    conn = get_db()
+    cur = conn.execute('SELECT path FROM novels WHERE id = ?', (novel_id,))
+    row = cur.fetchone()
+    conn.close()
+    if not row:
+        return ''
+    path = Path(row['path'])
+    if not path.exists():
+        return ''
+    content, _ = memdb_get(str(path.resolve()))
+    if content is None:
+        try:
+            content = read_text_with_encoding(path)
+        except Exception:
+            return ''
+        try:
+            memdb_set(str(path.resolve()), content, path.stat().st_mtime)
+        except Exception:
+            pass
+    return content[start:end] if end > start else ''
 import sqlite3
 from pathlib import Path
 import datetime

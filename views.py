@@ -1,8 +1,74 @@
-
+from flask import send_file, Response
+import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 import services
 
 bp = Blueprint('main', __name__)
+import re
+import urllib.parse
+from flask import Response
+
+def text_attachment_response(full_text: str, title: str):
+    # 清理标题（防止极端情况）
+    clean_title = re.sub(r'[/\\:*?"<>|\r\n\t]', '_', title)[:150]
+    if not clean_title.strip(' _'):
+        clean_title = "novel"
+
+    # ASCII fallback
+    ascii_name = re.sub(r'[^a-zA-Z0-9_.\-]', '_', clean_title).strip('_') or "document"
+    ascii_filename = f"{ascii_name}_full.txt"
+
+    # UTF-8 version for modern browsers
+    utf8_filename = f"{clean_title}_full.txt"
+    encoded = urllib.parse.quote(utf8_filename, safe='')
+
+    disposition = f'attachment; filename="{ascii_filename}"; filename*=UTF-8\'\'{encoded}'
+
+    return Response(
+        full_text,
+        mimetype='text/plain; charset=utf-8',
+        headers={'Content-Disposition': disposition}
+    )
+# 全文下载路由
+@bp.route('/download_full/<int:novel_id>')
+def download_full(novel_id):
+    title, page_text, chapters, current_chapter, page, total_pages, node = services.get_novel_page(novel_id, None, None, user='default')
+    if title is None or not chapters:
+        abort(404)
+    # 获取全文内容
+    from utils import read_chapter_text
+    full_text = ''
+    for idx, chap in enumerate(chapters):
+        full_text += chap['title'] + '\n'
+        if idx == 0:
+            full_text += (page_text or '') + '\n'
+        else:
+            full_text += read_chapter_text(novel_id, chap['start'], chap['end']) + '\n'
+    # 文件名安全处理
+    return text_attachment_response(full_text, title)
+
+
+
+
+
+
+
+
+
+
+@bp.route('/download/<int:novel_id>/<int:chapter_idx>')
+def download_chapter(novel_id, chapter_idx):
+    import re
+    title, page_text, chapters, current_chapter, page, total_pages, node = services.get_novel_page(novel_id, chapter_idx, None, user='default')
+    if title is None or not chapters or chapter_idx >= len(chapters):
+        abort(404)
+    # 只保留英文、数字、下划线
+    safe_title = re.sub(r'[^a-zA-Z0-9_]', '_', title)
+    filename = f"{safe_title}_chapter_{chapter_idx+1}.txt"
+    return Response(page_text, mimetype='text/plain; charset=utf-8', headers={
+        'Content-Disposition': f'attachment; filename={filename}'
+    })
+
 
 
 @bp.route('/')
