@@ -14,11 +14,10 @@
         <div class="col-md-9 col-12">
           <input name="q" value="{{ q }}" class="form-control" placeholder="输入文件名或前100字关键字">
         </div>
-        <input type="hidden" name="mode" value="all">
         <div class="col-md-3 col-12 d-flex gap-1">
-          <button type="submit" class="btn btn-success flex-fill">全部</button>
-          <button type="submit" formaction="{{ url_for('main.search') }}?mode=filename&q={{ q }}" class="btn btn-primary flex-fill">只文件名</button>
-          <button type="submit" formaction="{{ url_for('main.search') }}?mode=text&q={{ q }}" class="btn btn-warning flex-fill">只前100字</button>
+          <button type="submit" name="mode" value="all" class="btn btn-success flex-fill">全部</button>
+          <button type="submit" name="mode" value="filename" class="btn btn-primary flex-fill">只文件名</button>
+          <button type="submit" name="mode" value="text" class="btn btn-warning flex-fill">只前100字</button>
         </div>
       </form>
       <p>当前筛选：
