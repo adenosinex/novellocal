@@ -77,13 +77,13 @@
       </div>
       <div class="d-flex justify-content-between align-items-center mt-3">
         {% if current_chapter > 0 %}
-          <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter-1 }}&page=1" class="btn btn-outline-secondary">上一章节</a>
+          <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter-1 }}" class="btn btn-outline-secondary">上一章节</a>
         {% else %}
           <button class="btn btn-outline-secondary" disabled>上一章节</button>
         {% endif %}
           <button class="btn btn-secondary mb-2" onclick=" showToc()" type="button">☰ 目录</button>
         {% if chapters and current_chapter+1 < chapters|length %}
-          <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter+1 }}&page=1" class="btn btn-outline-secondary">下一章节</a>
+          <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter+1 }}" class="btn btn-outline-secondary">下一章节</a>
         {% else %}
           <button class="btn btn-outline-secondary" disabled>下一章节</button>
         {% endif %}

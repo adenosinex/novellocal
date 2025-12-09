@@ -53,7 +53,7 @@ def search_novels(q_filename, q_text):
 
 # 获取小说分页内容
 
-def get_novel_page(novel_id, chapter_idx, page_num, page_size=3000, user='default'):
+def get_novel_page(novel_id, chapter_idx, page_num=None, page_size=None, user='default'):
     conn = utils.get_db()
     cur = conn.execute('SELECT * FROM novels WHERE id = ?', (novel_id,))
     row = cur.fetchone()
@@ -87,19 +87,10 @@ def get_novel_page(novel_id, chapter_idx, page_num, page_size=3000, user='defaul
         chapter_idx = 0
     chap = chapters[chapter_idx]
     chapter_text = content[chap['start']:chap['end']] if chap['end'] > chap['start'] else ''
-    total_pages = max(1, (len(chapter_text) + page_size - 1) // page_size)
-    if page_num is None or page_num > total_pages:
-        page_num = total_pages
-    if page_num < 1:
-        page_num = 1
-    start_pos = (page_num - 1) * page_size
-    end_pos = start_pos + page_size
-    page_text = chapter_text[start_pos:end_pos]
-    # 写入阅读日志和最新节点
-    utils_read_record.write_read_log(user, novel_id, chapter_idx, page_num)
-    # 计算进度
+    # 记录整章节，无分页
+    utils_read_record.write_read_log(user, novel_id, chapter_idx, 1)
     total_chars = len(content)
-    read_chars = chap['start'] + (page_num - 1) * page_size + len(page_text)
+    read_chars = chap['end']
     percent = round(read_chars / total_chars * 100, 2) if total_chars > 0 else 0
-    utils_read_record.write_read_node(user, novel_id, chapter_idx, page_num, filename=row['filename'], total_chars=total_chars, percent=percent)
-    return row['filename'], page_text, chapters, chapter_idx, page_num, total_pages, node
+    utils_read_record.write_read_node(user, novel_id, chapter_idx, 1, filename=row['filename'], total_chars=total_chars, percent=percent)
+    return row['filename'], chapter_text, chapters, chapter_idx, 1, 1, node
