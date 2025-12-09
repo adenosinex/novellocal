@@ -82,12 +82,12 @@
                 {% endfor %}
               </select>
               <input name="tag" id="tag-input" class="form-control form-control-sm" style="width:120px;" placeholder="标记/标签" value="{{ mark.tag if mark else '' }}">
-              <button type="submit" class="btn btn-sm btn-primary">提交</button>
+              <button type="submit" class="btn btn-sm btn-primary" id="tagsub">提交</button>
             </form>
             {% if tags %}
               <div class="mt-1 small">常用标签：
                 {% for t in tags %}
-                  <a href="#" class="badge bg-info text-dark me-1 tag-suggest" onclick="event.preventDefault();document.getElementById('tag-input').value='{{ t }}';">{{ t }}</a>
+                  <a href="#" class="badge bg-info text-dark me-1 tag-suggest" onclick="event.preventDefault();document.getElementById('tag-input').value='{{ t }}';document.getElementById('tagsub').click()">{{ t }}</a>
                 {% endfor %}
               </div>
             {% endif %}

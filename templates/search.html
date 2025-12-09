@@ -31,7 +31,7 @@
             <ul class="list-group">
             {% for row in results %}
               <li class="list-group-item">
-                <a href="{{ url_for('main.reader', novel_id=row['id']) }}">{{ row['filename'] }}</a>
+                <a href="{{ url_for('main.reader', novel_id=row['id']) }}" target="_blank">{{ row['filename'] }}</a>
                 — {{ row['first100'] }}
               </li>
             {% endfor %}

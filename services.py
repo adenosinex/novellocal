@@ -47,6 +47,8 @@ def index_path(path_str):
             ok, _ = utils.index_file(p)
             if ok:
                 count += 1
+            print(f'\rIndexed: {count} - {"Success" if ok else "Failed"}', end='')
+        print()  # Move to the next line after the loop
         return True, f'已索引目录 {candidate} 下 {count} 个文件（.txt）'
     ok, err = utils.index_file(candidate)
     if ok:

@@ -129,6 +129,13 @@ def memdb_get(path: str):
 def index_file(file_path: Path):
     if not file_path.exists() or not file_path.is_file():
         return False, 'file not found'
+    conn = get_db()
+    cur = conn.execute('SELECT 1 FROM novels WHERE path = ?', (str(file_path.resolve()),))
+    is_already_indexed = cur.fetchone() is not None
+    if is_already_indexed:
+        conn.close()
+        return False, 'file already indexed'
+
     try:
         text = read_text_with_encoding(file_path)
     except Exception as e:
