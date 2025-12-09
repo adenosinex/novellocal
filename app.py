@@ -5,7 +5,7 @@ from pathlib import Path
 import datetime
 import re
 import math
-
+from flask_caching import Cache
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / 'novels.db'
 NOVELS_DIR = BASE_DIR / 'novels'
@@ -14,7 +14,11 @@ NOVELS_DIR.mkdir(parents=True, exist_ok=True)
 app = Flask(__name__)
 app.secret_key = 'change-me-in-prod'
 
+# 使用内存缓存（SimpleCache），适合单进程
+app.config['CACHE_TYPE'] = 'SimpleCache'
+app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5分钟过期
 
+cache = Cache(app)
 def get_db():
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
@@ -53,7 +57,7 @@ def index_file(file_path: Path):
     conn.close()
     return True, None
 
- 
+@cache.memoize(timeout=600)
 def read_text_with_encoding(file_path: Path) -> str:
     """
     尝试自动检测文件编码并返回文本。优先尝试 utf-8，失败后尝试使用 chardet 检测编码。
