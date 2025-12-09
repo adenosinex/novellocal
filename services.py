@@ -1,3 +1,4 @@
+import utils_read_record
 from pathlib import Path
 import utils
 
@@ -52,13 +53,13 @@ def search_novels(q_filename, q_text):
 
 # 获取小说分页内容
 
-def get_novel_page(novel_id, chapter_idx, page_num, page_size=3000):
+def get_novel_page(novel_id, chapter_idx, page_num, page_size=3000, user='default'):
     conn = utils.get_db()
     cur = conn.execute('SELECT * FROM novels WHERE id = ?', (novel_id,))
     row = cur.fetchone()
     conn.close()
     if not row:
-        return None, None, None, None, None, None
+        return None, None, None, None, None, None, None
     path = Path(row['path'])
     if not path.exists():
         content = ''
@@ -75,16 +76,30 @@ def get_novel_page(novel_id, chapter_idx, page_num, page_size=3000):
             except Exception:
                 pass
         chapters = utils.extract_chapters(content)
+    # 自动跳转到历史节点
+    node = None
+    if chapter_idx is None or page_num is None:
+        node = utils_read_record.get_read_node(user, novel_id)
+        if node:
+            chapter_idx = node.get('chapter_idx', 0)
+            page_num = node.get('page_num', 1)
     if chapter_idx is None or chapter_idx < 0 or chapter_idx >= len(chapters):
         chapter_idx = 0
     chap = chapters[chapter_idx]
     chapter_text = content[chap['start']:chap['end']] if chap['end'] > chap['start'] else ''
     total_pages = max(1, (len(chapter_text) + page_size - 1) // page_size)
-    if page_num > total_pages:
+    if page_num is None or page_num > total_pages:
         page_num = total_pages
     if page_num < 1:
         page_num = 1
     start_pos = (page_num - 1) * page_size
     end_pos = start_pos + page_size
     page_text = chapter_text[start_pos:end_pos]
-    return row['filename'], page_text, chapters, chapter_idx, page_num, total_pages
+    # 写入阅读日志和最新节点
+    utils_read_record.write_read_log(user, novel_id, chapter_idx, page_num)
+    # 计算进度
+    total_chars = len(content)
+    read_chars = chap['start'] + (page_num - 1) * page_size + len(page_text)
+    percent = round(read_chars / total_chars * 100, 2) if total_chars > 0 else 0
+    utils_read_record.write_read_node(user, novel_id, chapter_idx, page_num, filename=row['filename'], total_chars=total_chars, percent=percent)
+    return row['filename'], page_text, chapters, chapter_idx, page_num, total_pages, node

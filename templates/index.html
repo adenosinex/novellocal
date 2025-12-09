@@ -19,23 +19,7 @@
         {% endif %}
       {% endwith %}
 
-      <div class="card mb-4">
-        <div class="card-header">索引文件 / 目录</div>
-        <div class="card-body">
-          <form method="post" action="{{ url_for('main.index_route') }}" class="row g-2">
-            <div class="col-md-9 col-12">
-              <input name="filename" class="form-control" placeholder="example.txt 或 子目录/example.txt 或 C:\\path\\to\\dir">
-            </div>
-            <div class="col-md-3 col-12">
-              <button type="submit" class="btn btn-primary w-100">索引文件</button>
-            </div>
-          </form>
-          <form method="post" action="{{ url_for('main.index_route') }}" class="mt-2">
-            <input type="hidden" name="filename" value="">
-            <button type="submit" class="btn btn-secondary w-100">索引 novels/ 中所有 .txt 文件</button>
-          </form>
-        </div>
-      </div>
+     
 
       <div class="card mb-4">
         <div class="card-header">搜索</div>
@@ -51,7 +35,7 @@
         </div>
       </div>
 
-      <p class="text-muted">请把要索引的文本文件放到目录：<code>{{"novels"}}</code>，或填写文件路径进行单个索引。</p>
+    
 
       <div class="card">
         <div class="card-header">已索引小说</div>
@@ -71,6 +55,30 @@
           {% endif %}
         </div>
       </div>
+
+      
+     <div class="card mb-4">
+        <div class="card-header">索引文件 / 目录</div>
+        <div class="card-body">
+          <form method="post" action="{{ url_for('main.index_route') }}" class="row g-2">
+            <div class="col-md-9 col-12">
+              <input name="filename" class="form-control" placeholder="example.txt 或 子目录/example.txt 或 C:\\path\\to\\dir">
+            </div>
+            <div class="col-md-3 col-12">
+              <button type="submit" class="btn btn-primary w-100">索引文件</button>
+            </div>
+          </form>
+          <form method="post" action="{{ url_for('main.index_route') }}" class="mt-2">
+            <input type="hidden" name="filename" value="">
+            <button type="submit" class="btn btn-secondary w-100">索引 novels/ 中所有 .txt 文件</button>
+          </form>
+        </div>
+      </div>
+        <p class="text-muted">请把要索引的文本文件放到目录：<code>{{"novels"}}</code>，或填写文件路径进行单个索引。</p>
+  
+        
     </div>
-  </body>
+
+
+    </body>
 </html>

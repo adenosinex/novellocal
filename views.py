@@ -43,16 +43,21 @@ def reader(novel_id):
         chap_idx = int(chap_idx) if chap_idx is not None else None
     except ValueError:
         chap_idx = None
-    page = request.args.get('page', 1)
+    page = request.args.get('page', None)
     try:
-        page = int(page)
-        if page < 1:
+        page = int(page) if page is not None else None
+        if page is not None and page < 1:
             page = 1
     except ValueError:
-        page = 1
-    title, page_text, chapters, current_chapter, page, total_pages = services.get_novel_page(novel_id, chap_idx, page)
+        page = None
+    # 可扩展 user 标识，当前用 default
+    title, page_text, chapters, current_chapter, page, total_pages, node = services.get_novel_page(novel_id, chap_idx, page, user='default')
     if title is None:
         abort(404)
+    history_tip = None
+    if node and (chap_idx is None or page is None):
+        history_tip = f"已为你跳转到上次阅读位置：第{node['chapter_idx']+1}章，第{node['page_num']}页"
     return render_template('reader.html', title=title, content=page_text,
                            chapters=chapters, current_chapter=current_chapter,
-                           page=page, total_pages=total_pages, novel_id=novel_id)
+                           page=page, total_pages=total_pages, novel_id=novel_id,
+                           history_tip=history_tip)

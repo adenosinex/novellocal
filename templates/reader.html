@@ -13,6 +13,9 @@
     <div class="container py-3">
       <h1 class="mb-4 text-center">{{ title }}</h1>
       <p><a href="{{ url_for('main.home') }}" class="btn btn-link">返回首页</a></p>
+      {% if history_tip %}
+        <div class="alert alert-info text-center">{{ history_tip }}</div>
+      {% endif %}
       <div class="row">
         <div class="col-md-3 col-12 mb-3">
           <div class="card">
