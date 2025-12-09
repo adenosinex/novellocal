@@ -41,5 +41,20 @@
     </form>
 
     <p>请把要索引的文本文件放到目录：<code>{{"novels"}}</code>，或填写文件路径进行单个索引。</p>
+    
+    <h2>已索引小说</h2>
+    {% if novels %}
+      <ul>
+      {% for n in novels %}
+        <li>
+          <a href="{{ url_for('reader', novel_id=n['id']) }}">{{ n['filename'] }}</a>
+          — {{ n['first100'] }}
+          <small>（添加: {{ n['added_at'] }}）</small>
+        </li>
+      {% endfor %}
+      </ul>
+    {% else %}
+      <p>尚无已索引小说。先索引一些文件吧。</p>
+    {% endif %}
   </body>
 </html>

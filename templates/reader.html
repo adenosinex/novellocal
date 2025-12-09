@@ -10,6 +10,37 @@
   <body>
     <h1>{{ title }}</h1>
     <p><a href="{{ url_for('home') }}">返回</a></p>
-    <pre>{{ content }}</pre>
+
+    <div style="display:flex; gap:16px; align-items:flex-start;">
+      <div style="min-width:200px; max-width:300px;">
+        <h3>目录</h3>
+        <ul>
+          {% for c in chapters %}
+            <li>
+              {% if loop.index0 == current_chapter %}
+                <strong>{{ loop.index }}. {{ c.title }}</strong>
+              {% else %}
+                <a href="{{ url_for('reader', novel_id=novel_id) }}?chapter={{ loop.index0 }}&page=1">{{ loop.index }}. {{ c.title }}</a>
+              {% endif %}
+            </li>
+          {% endfor %}
+        </ul>
+      </div>
+
+      <div style="flex:1;">
+        <h3>{{ chapters[current_chapter].title if chapters else '章节' }}</h3>
+        <pre>{{ content }}</pre>
+
+        <div style="margin-top:12px;">
+          {% if page > 1 %}
+            <a href="{{ url_for('reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page-1 }}">上一页</a>
+          {% endif %}
+          <span> 第 {{ page }} / {{ total_pages }} 页 </span>
+          {% if page < total_pages %}
+            <a href="{{ url_for('reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page+1 }}">下一页</a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
   </body>
 </html>
