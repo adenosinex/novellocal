@@ -7,6 +7,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <style>
       pre { white-space: pre-wrap; word-wrap: break-word; }
+      /* 目录抽屉样式 */
+      #toc-drawer {
+        position: fixed;
+        top: 0;
+        left: 0;
+        height: 100vh;
+        width: 280px;
+        max-width: 90vw;
+        background: #fff;
+        box-shadow: 2px 0 8px rgba(0,0,0,0.08);
+        z-index: 1050;
+        transform: translateX(-100%);
+        transition: transform 0.3s;
+        overflow-y: auto;
+      }
+      #toc-drawer.show {
+        transform: translateX(0);
+      }
+      #toc-mask {
+        display: none;
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.2);
+        z-index: 1049;
+      }
+      #toc-mask.show {
+        display: block;
+      }
+      @media (max-width: 768px) {
+        #toc-drawer { width: 90vw; }
+      }
     </style>
   </head>
   <body class="bg-light">
@@ -16,45 +47,64 @@
       {% if history_tip %}
         <div class="alert alert-info text-center">{{ history_tip }}</div>
       {% endif %}
-      <div class="row">
-        <div class="col-md-3 col-12 mb-3">
-          <div class="card">
-            <div class="card-header">目录</div>
-            <ul class="list-group list-group-flush">
-              {% for c in chapters %}
-                <li class="list-group-item {% if loop.index0 == current_chapter %}active{% endif %}">
-                  {% if loop.index0 == current_chapter %}
-                    <strong>{{ loop.index }}. {{ c.title }}</strong>
-                  {% else %}
-                    <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ loop.index0 }}&page=1">{{ loop.index }}. {{ c.title }}</a>
-                  {% endif %}
-                </li>
-              {% endfor %}
-            </ul>
+      <button class="btn btn-secondary mb-2" id="toc-toggle" type="button">☰ 目录</button>
+      <div id="toc-drawer">
+        <div class="card h-100 border-0 rounded-0">
+          <div class="card-header d-flex justify-content-between align-items-center">
+            <span>目录</span>
+            <button class="btn btn-sm btn-outline-secondary" id="toc-close">关闭</button>
           </div>
-        </div>
-        <div class="col-md-9 col-12">
-          <div class="card">
-            <div class="card-header">{{ chapters[current_chapter].title if chapters else '章节' }}</div>
-            <div class="card-body">
-              <pre class="mb-3">{{ content }}</pre>
-              <div class="d-flex justify-content-between align-items-center">
-                {% if page > 1 %}
-                  <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page-1 }}" class="btn btn-outline-primary">上一页</a>
+          <ul class="list-group list-group-flush">
+            {% for c in chapters %}
+              <li class="list-group-item {% if loop.index0 == current_chapter %}active{% endif %}">
+                {% if loop.index0 == current_chapter %}
+                  <strong>{{ loop.index }}. {{ c.title }}</strong>
                 {% else %}
-                  <span></span>
+                  <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ loop.index0 }}&page=1">{{ loop.index }}. {{ c.title }}</a>
                 {% endif %}
-                <span>第 {{ page }} / {{ total_pages }} 页</span>
-                {% if page < total_pages %}
-                  <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter }}&page={{ page+1 }}" class="btn btn-outline-primary">下一页</a>
-                {% else %}
-                  <span></span>
-                {% endif %}
-              </div>
-            </div>
-          </div>
+              </li>
+            {% endfor %}
+          </ul>
         </div>
       </div>
+      <div id="toc-mask"></div>
+      <div class="card">
+        <div class="card-header">{{ chapters[current_chapter].title if chapters else '章节' }}</div>
+        <div class="card-body">
+          <pre class="mb-3">{{ content }}</pre>
+          
+        </div>
+      </div>
+      <div class="d-flex justify-content-between align-items-center mt-3">
+        {% if current_chapter > 0 %}
+          <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter-1 }}&page=1" class="btn btn-outline-secondary">上一章节</a>
+        {% else %}
+          <button class="btn btn-outline-secondary" disabled>上一章节</button>
+        {% endif %}
+          <button class="btn btn-secondary mb-2" onclick=" showToc()" type="button">☰ 目录</button>
+        {% if chapters and current_chapter+1 < chapters|length %}
+          <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ current_chapter+1 }}&page=1" class="btn btn-outline-secondary">下一章节</a>
+        {% else %}
+          <button class="btn btn-outline-secondary" disabled>下一章节</button>
+        {% endif %}
+      </div>
+      <script>
+        const tocDrawer = document.getElementById('toc-drawer');
+        const tocMask = document.getElementById('toc-mask');
+        const tocToggle = document.getElementById('toc-toggle');
+        const tocClose = document.getElementById('toc-close');
+        function showToc() {
+          tocDrawer.classList.add('show');
+          tocMask.classList.add('show');
+        }
+        function hideToc() {
+          tocDrawer.classList.remove('show');
+          tocMask.classList.remove('show');
+        }
+        tocToggle.onclick = showToc;
+        tocClose.onclick = hideToc;
+        tocMask.onclick = hideToc;
+      </script>
     </div>
   </body>
 </html>
