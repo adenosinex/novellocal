@@ -73,16 +73,24 @@
         <div class="card-header d-flex justify-content-between align-items-center">
           <span>{{ chapters[current_chapter].title if chapters else '章节' }}</span>
           {% if current_chapter == 0 %}
-            <form method="post" action="{{ url_for('main.mark_novel', novel_id=novel_id) }}" class="d-flex align-items-center gap-2 mb-0">
+            <form method="post" action="{{ url_for('main.mark_novel', novel_id=novel_id) }}" class="d-flex align-items-center gap-2 mb-0" id="mark-form">
               <label class="mb-0">打分：</label>
               <select name="score" class="form-select form-select-sm" style="width:auto;">
                 <option value="">请选择</option>
                 {% for s in range(1,6) %}
-                  <option value="{{ s }}" {% if mark and mark == s|string %}selected{% endif %}>{{ s }}分</option>
+                  <option value="{{ s }}" {% if mark and mark.score == s|string %}selected{% endif %}>{{ s }}分</option>
                 {% endfor %}
               </select>
+              <input name="tag" id="tag-input" class="form-control form-control-sm" style="width:120px;" placeholder="标记/标签" value="{{ mark.tag if mark else '' }}">
               <button type="submit" class="btn btn-sm btn-primary">提交</button>
             </form>
+            {% if tags %}
+              <div class="mt-1 small">常用标签：
+                {% for t in tags %}
+                  <a href="#" class="badge bg-info text-dark me-1 tag-suggest" onclick="event.preventDefault();document.getElementById('tag-input').value='{{ t }}';">{{ t }}</a>
+                {% endfor %}
+              </div>
+            {% endif %}
           {% endif %}
         </div>
         {% if current_chapter == 0 %}

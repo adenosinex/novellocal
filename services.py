@@ -1,28 +1,38 @@
 import utils_mark
 # 文件打分
-def mark_novel(user, novel_id, score):
+
+def mark_novel(user, novel_id, score, tag=None):
     conn = utils.get_db()
     cur = conn.execute('SELECT filename, path FROM novels WHERE id = ?', (novel_id,))
     row = cur.fetchone()
     conn.close()
     if not row:
         return False
-    utils_mark.write_mark(user, novel_id, row['filename'], row['path'], score)
+    utils_mark.write_mark(user, novel_id, row['filename'], row['path'], score, tag)
     return True
 
 def get_novel_mark(user, novel_id):
     return utils_mark.get_mark(user, novel_id)
+
+def get_all_tags():
+    return utils_mark.get_all_tags()
 import utils_read_record
 from pathlib import Path
 import utils
 
 # 小说列表
 
-def list_novels():
+def list_novels(page=1, page_size=20, with_total=False):
     conn = utils.get_db()
-    cur = conn.execute('SELECT id, filename, first100, added_at FROM novels ORDER BY added_at DESC')
+    offset = (page - 1) * page_size
+    cur = conn.execute('SELECT id, filename, first100, added_at FROM novels ORDER BY added_at DESC LIMIT ? OFFSET ?', (page_size, offset))
     novels = cur.fetchall()
+    total = None
+    if with_total:
+        total = conn.execute('SELECT COUNT(*) FROM novels').fetchone()[0]
     conn.close()
+    if with_total:
+        return novels, total
     return novels
 
 # 索引文件或目录

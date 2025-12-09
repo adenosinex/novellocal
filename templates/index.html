@@ -38,18 +38,35 @@
     
 
       <div class="card">
-        <div class="card-header">已索引小说</div>
+        <div class="card-header">已索引小说 <span class="badge bg-secondary">共 {{ total }} 本</span></div>
         <div class="card-body">
           {% if novels %}
             <ul class="list-group">
             {% for n in novels %}
               <li class="list-group-item">
+                <span class="text-secondary">{{ (page-1)*page_size + loop.index }}.</span>
                 <a href="{{ url_for('main.reader', novel_id=n['id']) }}">{{ n['filename'] }}</a>
                 — {{ n['first100'] }}
                 <small class="text-muted">（添加: {{ n['added_at'] }}）</small>
               </li>
             {% endfor %}
             </ul>
+            <nav class="mt-3">
+              <ul class="pagination justify-content-center">
+                {% set total_pages = (total // page_size) + (1 if total % page_size else 0) %}
+                <li class="page-item {% if page <= 1 %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('main.home', page=page-1) }}">上一页</a>
+                </li>
+                {% for p in range(1, total_pages+1) %}
+                  <li class="page-item {% if p == page %}active{% endif %}">
+                    <a class="page-link" href="{{ url_for('main.home', page=p) }}">{{ p }}</a>
+                  </li>
+                {% endfor %}
+                <li class="page-item {% if page >= total_pages %}disabled{% endif %}">
+                  <a class="page-link" href="{{ url_for('main.home', page=page+1) }}">下一页</a>
+                </li>
+              </ul>
+            </nav>
           {% else %}
             <p class="text-muted">尚无已索引小说。先索引一些文件吧。</p>
           {% endif %}
