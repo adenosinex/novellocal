@@ -5,6 +5,7 @@ from pathlib import Path
 import datetime
 import re
 import math
+import utils
 from flask_caching import Cache
 BASE_DIR = Path(__file__).parent
 DB_PATH = BASE_DIR / 'novels.db'
@@ -13,12 +14,12 @@ NOVELS_DIR.mkdir(parents=True, exist_ok=True)
 
 app = Flask(__name__)
 app.secret_key = 'change-me-in-prod'
-
-# 使用内存缓存（SimpleCache），适合单进程
 app.config['CACHE_TYPE'] = 'SimpleCache'
 app.config['CACHE_DEFAULT_TIMEOUT'] = 300  # 5分钟过期
 
 cache = Cache(app)
+# 使用内存缓存（SimpleCache），适合单进程
+
 def get_db():
     conn = sqlite3.connect(str(DB_PATH))
     conn.row_factory = sqlite3.Row
