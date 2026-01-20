@@ -59,7 +59,7 @@ def index_path(path_str):
 # 搜索小说
 
 def search_novels(q_filename, q_text):
-    sql = 'SELECT id, filename, first100, added_at FROM novels'
+    sql = 'SELECT id, filename, first100, added_at,path FROM novels'
     clauses = []
     params = []
     if q_filename:

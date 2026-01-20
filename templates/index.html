@@ -92,10 +92,43 @@
         </div>
       </div>
         <p class="text-muted">请把要索引的文本文件放到目录：<code>{{"novels"}}</code>，或填写文件路径进行单个索引。</p>
+        <div class="card mb-4">
+          <div class="card-header">前端定义 (JSON)</div>
+          <div class="card-body">
+            <label for="frontendDef" class="form-label">请确认或修改前端定义（JSON 格式）:</label>
+            <textarea id="frontendDef" class="form-control" rows="10">{{ frontend_json|e }}</textarea>
+            <div class="mt-2 d-flex gap-2">
+              <button id="copyJson" class="btn btn-outline-secondary">复制到剪贴板</button>
+              <a id="downloadJson" class="btn btn-outline-primary" href="#" download="frontend_definition.json">下载 JSON</a>
+            </div>
+          </div>
+        </div>
   
         
     </div>
 
+    <script>
+      (function(){
+        var ta = document.getElementById('frontendDef');
+        var copyBtn = document.getElementById('copyJson');
+        var dl = document.getElementById('downloadJson');
+        if(copyBtn && ta){
+          copyBtn.addEventListener('click', function(){
+            ta.select();
+            try{ document.execCommand('copy'); alert('已复制到剪贴板'); }
+            catch(e){ navigator.clipboard && navigator.clipboard.writeText(ta.value).then(function(){ alert('已复制到剪贴板'); }); }
+          });
+        }
+        if(dl && ta){
+          dl.addEventListener('click', function(e){
+            var blob = new Blob([ta.value], {type: 'application/json;charset=utf-8'});
+            var url = URL.createObjectURL(blob);
+            dl.href = url;
+            setTimeout(function(){ URL.revokeObjectURL(url); }, 5000);
+          });
+        }
+      })();
+    </script>
 
     </body>
 </html>
