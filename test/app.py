@@ -1,127 +1,224 @@
-import time,os
+import os
+import time
 import sqlite3
 import faiss
 import numpy as np
-from flask import Flask, render_template, request, jsonify, render_template_string
+import datetime
+import re
+from flask import Flask, render_template, request, jsonify
 from sentence_transformers import SentenceTransformer
+
+# --- 修复报错的关键设置 ---
+# 禁用 PyTorch Dynamo 编译优化，解决退出时的 "dump_compile_times" 报错
+os.environ["TORCH_COMPILE_DISABLE"] = "1"
+os.environ["ANOMALY_DETECTION_NO_TRACEBACK"] = "1"
+# 代理设置
 os.environ['http_proxy'] = 'http://127.0.0.1:57713'
 os.environ['https_proxy'] = 'http://127.0.0.1:57713'
 
 # --- 配置 ---
-DB_PATH = "novel_database.db"
-INDEX_PATH = "vectors.index"
+CONFIG_LIST = [
+    {
+        "name": "Local_Novels",
+        "key": "novels",
+        "db_path": "db_novels.sqlite",
+        "index_path": "index_novels.faiss"
+    },
+    {
+        "name": "Nas_Novels",
+        "key": "nas",
+        "db_path": "db_nas_novels.sqlite",
+        "index_path": "index_nas_novels.faiss"
+    },
+    {
+        "name": "My_Videos",
+        "key": "videos",
+        "db_path": "db_videos.sqlite",
+        "index_path": "index_videos.faiss"
+    }
+]
+
 MODEL_NAME = "BAAI/bge-small-zh-v1.5"
 
-# --- 搜索引擎核心类 (单例模式) ---
-class SearchEngine:
+class SearchService:
     def __init__(self):
-        print("正在初始化搜索引擎...")
-        t0 = time.time()
-        
-        # 1. 加载模型 (通常耗时 2-3秒)
+        print(">>> 正在加载模型...")
         self.model = SentenceTransformer(MODEL_NAME)
-        
-        # 2. 加载 FAISS 索引 (毫秒级)
-        try:
-            self.index = faiss.read_index(INDEX_PATH)
-        except Exception as e:
-            print(f"错误: 无法加载索引文件 {INDEX_PATH}。请先运行预处理脚本。")
-            raise e
-            
-        print(f"搜索引擎初始化完成，耗时 {time.time() - t0:.2f}s")
-        print(f"索引包含向量数: {self.index.ntotal}")
+        self.resources = {}
+        self.load_resources()
 
-    def search(self, query, top_k=5):
+    def load_resources(self):
+        for config in CONFIG_LIST:
+            key = config['key']
+            res = {"config": config, "index": None, "available": False}
+            if os.path.exists(config['index_path']) and os.path.exists(config['db_path']):
+                try:
+                    res["index"] = faiss.read_index(config['index_path'])
+                    res["available"] = True
+                except Exception as e:
+                    print(f"资源加载失败 {key}: {e}")
+            self.resources[key] = res
+
+    def parse_video_meta(self, preview_text):
+        """
+        从描述文本中提取数值以便排序
+        文本示例: "Size: 50.20MB, Resolution: 1920x1080, Duration: 5m30s"
+        """
+        meta = {
+            "size_mb": 0.0,
+            "resolution_pixels": 0,
+            "duration_sec": 0
+        }
+        
+        if not preview_text:
+            return meta
+
+        # 1. 提取大小 (MB)
+        size_match = re.search(r'Size:\s*([\d\.]+)MB', preview_text)
+        if size_match:
+            meta['size_mb'] = float(size_match.group(1))
+
+        # 2. 提取分辨率 (计算总像素)
+        res_match = re.search(r'Resolution:\s*(\d+)x(\d+)', preview_text)
+        if res_match:
+            w, h = int(res_match.group(1)), int(res_match.group(2))
+            meta['resolution_pixels'] = w * h
+
+        # 3. 提取时长 (转为秒)
+        dur_match = re.search(r'Duration:\s*(\d+)m(\d+)s', preview_text)
+        if dur_match:
+            mins, secs = int(dur_match.group(1)), int(dur_match.group(2))
+            meta['duration_sec'] = mins * 60 + secs
+            
+        return meta
+
+    def search(self, query, target_keys, min_score=0.4, sort_by='score', page=1, page_size=20):
         t_start = time.time()
         
-        # 1. 文本转向量
+        # 1. 获取向量
         q_vec = self.model.encode([query], normalize_embeddings=True)
         
-        # 2. 向量检索 (返回 距离D 和 ID I)
-        D, I = self.index.search(q_vec, top_k)
+        # 候选池：先拿出足够多的数据(例如1000条)，才能保证排序后的分页是准确的
+        # 如果数据量巨大，这里的 top_k 可能需要调大，或者采用流式处理
+        CANDIDATE_LIMIT = 1000 
         
-        # 3. 结果处理
-        doc_ids = [int(i) for i in I[0] if i != -1]
-        if not doc_ids:
-            return [], 0.0
+        raw_candidates = []
 
-        results_map = {}
-        # 连接数据库获取详情
-        with sqlite3.connect(DB_PATH) as conn:
-            placeholders = ','.join('?' * len(doc_ids))
-            sql = f"SELECT id, filename, preview_content FROM documents WHERE id IN ({placeholders})"
-            cursor = conn.execute(sql, doc_ids)
-            for row in cursor:
-                results_map[row[0]] = {
-                    'filename': row[1],
-                    'preview': row[2]
-                }
+        # 2. 遍历库 -> 向量搜索 -> 阈值过滤
+        for key in target_keys:
+            if key not in self.resources or not self.resources[key]['available']:
+                continue
+            
+            res = self.resources[key]
+            index = res['index']
+            db_path = res['config']['db_path']
 
-        # 4. 组装有序结果
-        final_results = []
-        for rank, doc_id in enumerate(doc_ids):
-            if doc_id in results_map:
-                item = results_map[doc_id]
-                score = float(D[0][rank])
-                final_results.append({
-                    'id': doc_id,
-                    'filename': item['filename'],
-                    'preview': item['preview'][:200] + "...", # 截取展示
-                    'score': round(score, 4), # 相似度分数
-                    'match_percent': int(score * 100) # 转换为百分比展示
-                })
+            # FAISS 搜索
+            D, I = index.search(q_vec, CANDIDATE_LIMIT)
+            
+            valid_ids = []
+            score_map = {}
+            
+            # 过滤：只保留分数 > min_score 的 ID
+            for rank, idx in enumerate(I[0]):
+                if idx != -1:
+                    score = float(D[0][rank])
+                    if score >= min_score:
+                        valid_ids.append(int(idx))
+                        score_map[int(idx)] = score
+            
+            if not valid_ids:
+                continue
+
+            # 查库
+            with sqlite3.connect(db_path) as conn:
+                placeholders = ','.join('?' * len(valid_ids))
+                sql = f"SELECT id, filepath, filename, preview_content, mtime, file_type FROM documents WHERE id IN ({placeholders})"
+                cursor = conn.execute(sql, valid_ids)
+                
+                for row in cursor:
+                    doc_id, fpath, fname, preview, mtime, ftype = row
+                    score = score_map.get(doc_id, 0)
+                    
+                    # 解析元数据 (如果是视频)
+                    meta_vals = self.parse_video_meta(preview) if ftype == 'video' else {"size_mb": 0, "resolution_pixels": 0, "duration_sec": 0}
+
+                    raw_candidates.append({
+                        "id": f"{key}_{doc_id}",
+                        "source": res['config']['name'],
+                        "filename": fname,
+                        "filepath": fpath,
+                        "preview": preview,
+                        "type": ftype,
+                        "mtime": mtime,
+                        "mtime_str": datetime.datetime.fromtimestamp(mtime).strftime('%Y-%m-%d %H:%M'),
+                        "score": score,
+                        "score_percent": int(score * 100),
+                        # 排序用的数值字段
+                        "sort_size": meta_vals['size_mb'],
+                        "sort_res": meta_vals['resolution_pixels'],
+                        "sort_dur": meta_vals['duration_sec'],
+                        "external_url": fpath # 暂时直接返回路径，前端处理跳转
+                    })
+
+        # 3. 排序 (Sort)
+        # Python 的 sort 是稳定的 (Timsort)
+        reverse = True # 默认降序
         
-        t_cost = time.time() - t_start
-        return final_results, t_cost
+        if sort_by == 'score':
+            raw_candidates.sort(key=lambda x: x['score'], reverse=True)
+        elif sort_by == 'date_desc':
+            raw_candidates.sort(key=lambda x: x['mtime'], reverse=True)
+        elif sort_by == 'date_asc':
+            raw_candidates.sort(key=lambda x: x['mtime'], reverse=False)
+        elif sort_by == 'size':
+            raw_candidates.sort(key=lambda x: x['sort_size'], reverse=True)
+        elif sort_by == 'duration':
+            raw_candidates.sort(key=lambda x: x['sort_dur'], reverse=True) # 长视频在前
+        elif sort_by == 'resolution':
+            raw_candidates.sort(key=lambda x: x['sort_res'], reverse=True) # 高清在前
+        elif sort_by == 'name':
+            raw_candidates.sort(key=lambda x: x['filename'], reverse=False) # A-Z
 
-# --- Flask 应用 ---
+        # 4. 分页 (Slice)
+        total = len(raw_candidates)
+        start = (page - 1) * page_size
+        end = start + page_size
+        paged_results = raw_candidates[start:end]
+
+        return {
+            "results": paged_results,
+            "total": total,
+            "time": time.time() - t_start
+        }
+
 app = Flask(__name__)
+engine = SearchService()
 
-# 全局加载引擎，避免每次请求都重新加载模型
-try:
-    engine = SearchEngine()
-except Exception:
-    engine = None
-
-# --- 前端 HTML 模板 (使用 Tailwind CSS 美化) ---
 @app.route('/')
 def index():
-    """直接渲染 templates 目录下的 index.html"""
-    if engine is None:
-        return "<h1>错误: 系统未初始化</h1><p>请检查向量索引是否存在。</p>"
-    
-    # Flask 会自动去 templates 文件夹里找文件
-    return render_template('index.html')
+    return render_template('index.html', config_list=CONFIG_LIST)
 
 @app.route('/api/search', methods=['POST'])
 def api_search():
-    """
-    通用 API 接口
-    Input: JSON { "query": "...", "top_k": 5 }
-    Output: JSON { "status": "success", "data": [...], "time": 0.02 }
-    """
-    if engine is None:
-        return jsonify({"status": "error", "message": "Engine not loaded"}), 500
-
-    data = request.get_json()
-    if not data or 'query' not in data:
-        return jsonify({"status": "error", "message": "Missing query"}), 400
-
-    query_text = data['query']
-    top_k = data.get('top_k', 5) # 默认搜5条
-
     try:
-        instruction = "为这个句子生成表示以用于检索相关文章："
-        full_query = instruction + query_text
-        results, t_cost = engine.search(full_query, top_k)
-        return jsonify({
-            "status": "success",
-            "data": results,
-            "time": t_cost
-        })
+        data = request.json
+        if not data or 'query' not in data:
+            return jsonify({"error": "Missing query"}), 400
+            
+        result = engine.search(
+            query=data['query'],
+            target_keys=data.get('targets', []),
+            min_score=float(data.get('min_score', 0.3)),
+            sort_by=data.get('sort_by', 'score'),
+            page=int(data.get('page', 1)),
+            page_size=int(data.get('page_size', 20))
+        )
+        return jsonify({"status": "success", **result})
     except Exception as e:
+        print(f"Error: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
 if __name__ == '__main__':
-    # threaded=True 允许并发请求 (对于只读搜索是安全的)
+    # threaded=True 支持并发请求
     app.run(host='0.0.0.0', port=5000, debug=True, threaded=True)
