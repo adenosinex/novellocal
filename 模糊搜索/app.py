@@ -13,9 +13,10 @@ from sentence_transformers import SentenceTransformer
 os.environ["TORCH_COMPILE_DISABLE"] = "1"
 os.environ["ANOMALY_DETECTION_NO_TRACEBACK"] = "1"
 # 代理设置
-os.environ['http_proxy'] = 'http://127.0.0.1:57713'
-os.environ['https_proxy'] = 'http://127.0.0.1:57713'
-
+# os.environ['http_proxy'] = 'http://127.0.0.1:57713'
+# os.environ['https_proxy'] = 'http://127.0.0.1:57713'
+MODEL_NAME = "BAAI/bge-small-zh-v1.5"
+MODEL_NAME = "./bge_model"
 # --- 配置 ---
 CONFIG_LIST = [
     {
@@ -38,7 +39,7 @@ CONFIG_LIST = [
     }
 ]
 
-MODEL_NAME = "BAAI/bge-small-zh-v1.5"
+
 
 class SearchService:
     def __init__(self):

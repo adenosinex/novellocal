@@ -10,3 +10,4 @@ sources/caimoge_mobile.json
 *.index
 *.sqlite
 *.faiss
+模糊搜索/bge_model/*

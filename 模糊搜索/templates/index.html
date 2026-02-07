@@ -108,17 +108,19 @@
                 <div class="flex justify-between items-start gap-4">
                     <div class="flex-1 min-w-0">
                         <div class="flex items-center gap-2 mb-1">
-                            <span class="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase text-white tracking-wider"
-                                  :class="item.type === 'video' ? 'bg-purple-500' : 'bg-indigo-500'">
-                                ${ item.type }
-                            </span>
-                            
-                            <h3 class="text-lg font-bold text-slate-800 truncate">
-                                <a :href="buildStreamUrl(item.filename)" target="_blank" class="hover:text-indigo-600 transition-colors">
-                                    ${ item.filename }
-                                </a>
-                            </h3>
-                        </div>
+    <span class="text-[10px] px-1.5 py-0.5 rounded font-bold uppercase text-white tracking-wider"
+          :class="item.type === 'video' ? 'bg-purple-500' : 'bg-indigo-500'">
+        ${ item.type }
+    </span>
+    
+    <h3 class="text-lg font-bold text-slate-800 truncate">
+        <a :href="getItemUrl(item)" 
+           target="_blank" 
+           class="hover:text-indigo-600 transition-colors">
+            ${ item.filename }
+        </a>
+    </h3>
+</div>
                         
                         <div class="flex flex-wrap gap-2 text-xs text-slate-500 mb-3 items-center">
                             <span>📅 ${ item.mtime_str }</span>
@@ -245,12 +247,19 @@
                     localStorage.setItem('ai_search_prefs', JSON.stringify(prefs));
                 },
                 
-                buildStreamUrl(filename) {
-                    // 文件名 URL 安全编码
-                    const safeName = encodeURIComponent(filename);
-                    // 假设这是你的流媒体服务地址
-                    return `http://one4.zin6.site/videos/stream/name/${safeName}`;
-                },
+               getItemUrl(item) {
+        // 1. 安全编码文件名 (处理空格、#、? 等符号)
+        const safeName = encodeURIComponent(item.filename);
+
+        // 2. 根据类型返回不同的 URL 前缀
+        if (item.type === 'video') {
+            // 视频流地址
+            return `http://one4.zin6.site/videos/stream/name/${safeName}`;
+        } else {
+            // 文本/小说阅读器地址 (注意修复了 http:// 的格式)
+            return `http://127.0.0.1:9000/reader/name/${safeName}`;
+        }
+    },
                 
                 // 防抖搜索：用户连续输入/拖动滑块时，只在停止操作 400ms 后触发一次搜索
                 debouncedSearch() {

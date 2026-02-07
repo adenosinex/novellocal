@@ -183,3 +183,43 @@ def reader(novel_id):
                            chapters=chapters, current_chapter=current_chapter,
                            page=page, total_pages=total_pages, novel_id=novel_id,
                            history_tip=history_tip, mark=mark, tags=tags)
+
+
+from flask import redirect, url_for, abort, request
+
+@bp.route('/reader/name/<path:filename>')
+def reader_by_filename(filename):
+    """
+    根据文件名重定向到阅读页。
+    支持 URL 传参，例如: /reader/name/我的小说.txt?chapter=5
+    """
+    filename = filename.strip()
+    
+    # 使用现有的搜索服务查找文件名
+    # 对应 search 路由中 mode == 'filename' 的逻辑
+    rows = services.search_novels(filename, '')
+    
+    target_id = None
+    
+    # 策略 1: 尝试精确匹配 (防止搜索 "斗破" 匹配到 "斗破苍穹续集" 而不是本体)
+    for row in rows:
+        d = dict(row)
+        # 假设数据库返回字段中有 title 或 filename (根据你的 search 路由推断)
+        # 这里的 .name 属性取决于你 row 对象的具体结构，如果是字典则用 d.get('title')
+        db_name = d.get('title') or d.get('filename') or ''
+        
+        if db_name == filename:
+            target_id = d.get('id')
+            break
+            
+    # 策略 2: 如果没有精确匹配，但有搜索结果，默认取第一个
+    if target_id is None and rows:
+        first_row = dict(rows[0])
+        target_id = first_row.get('id')
+
+    if target_id:
+        # 构建重定向 URL，并保留原有的查询参数 (如 chapter, xqy 等)
+        # url_for('.reader') 这里的 . 代表当前 blueprint
+        return redirect(url_for('.reader', novel_id=target_id, **request.args))
+    else:
+        return abort(404, description=f"未找到名为 '{filename}' 的小说")
