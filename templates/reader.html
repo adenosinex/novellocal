@@ -65,11 +65,11 @@
           </div>
           <ul class="list-group list-group-flush">
             {% for c in chapters %}
-              <li class="list-group-item {% if loop.index0 == current_chapter %}active{% endif %}">
-                {% if loop.index0 == current_chapter %}
+              <li class="list-group-item {% if loop.index == current_chapter %}active{% endif %}">
+                {% if loop.index == current_chapter %}
                   <strong>{{ loop.index }}. {{ c.title }}</strong>
                 {% else %}
-                  <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ loop.index0 }}&page=1">{{ loop.index }}. {{ c.title }}</a>
+                  <a href="{{ url_for('main.reader', novel_id=novel_id) }}?chapter={{ loop.index }}&page=1">{{ loop.index }}. {{ c.title }}</a>
                 {% endif %}
               </li>
             {% endfor %}

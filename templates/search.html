@@ -33,9 +33,10 @@
              {% for row in results %}
               <tr class="list-group-item" id="nr">
                 <td>
-                  <a href="{{ url_for('main.reader', novel_id=row['id']) }}" target="_blank">{{ row['filename'] }}</a>
-                 
-                  <a href="">path-{{row['path']}}</a>
+                  <a href="{{ url_for('main.reader', novel_id=row['id']) }}?xqy=1"  target="_blank">{{ row['filename'] }}</a>
+                  <small class="text-muted">（字数: {{ row['chars'] }}，大小: {{ '%.2f' % ((row['size'] or 0)/1024) }} KB）</small>
+                  <br/>
+                  <a href="" class="text-muted">path-{{row['path']}}</a>
                 </td>
                 
               </tr> 

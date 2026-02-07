@@ -1,0 +1,1 @@
+pip install numpy pandas tqdm sentence-transformers faiss-cpu

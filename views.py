@@ -3,6 +3,8 @@ import re
 from flask import Blueprint, render_template, request, redirect, url_for, flash, abort
 import services
 import os
+import utils
+from pathlib import Path
 
 bp = Blueprint('main', __name__)
 import re
@@ -121,21 +123,52 @@ def search():
     mode = request.args.get('mode', 'all')
     # 默认全部搜索
     if mode == 'filename':
-        results = services.search_novels(q, '')
+        rows = services.search_novels(q, '')
     elif mode == 'text':
-        results = services.search_novels('', q)
+        rows = services.search_novels('', q)
     else:
-        results = services.search_novels(q, q)
+        rows = services.search_novels(q, q)
+
+    # 为每个搜索结果计算字数（字符数），使用内存缓存以减少磁盘I/O
+    results = []
+    for row in rows:
+        d = dict(row)
+        # prefer stored chars and size from DB, fallback to reading file
+        try:
+            if d.get('chars') is None:
+                p = Path(d.get('path') or '')
+                if p.exists():
+                    content = utils.read_text_with_encoding(p)
+                    d['chars'] = len(content)
+                    try:
+                        utils.memdb_set(str(p.resolve()), content, p.stat().st_mtime)
+                    except Exception:
+                        pass
+                else:
+                    d['chars'] = 0
+        except Exception:
+            d['chars'] = d.get('chars') or 0
+        try:
+            if d.get('size') is None:
+                p = Path(d.get('path') or '')
+                d['size'] = p.stat().st_size if p.exists() else 0
+        except Exception:
+            d['size'] = d.get('size') or 0
+        results.append(d)
+
     return render_template('search.html', results=results, q=q, mode=mode)
 
 
 @bp.route('/reader/<int:novel_id>')
 def reader(novel_id):
     chap_idx = request.args.get('chapter', None)
+    xqy = request.args.get('xqy', None)
     try:
         chap_idx = int(chap_idx) if chap_idx is not None else None
     except ValueError:
         chap_idx = None
+    if chap_idx:
+        chap_idx-=1
     page = None
     title, page_text, chapters, current_chapter, page, total_pages, node = services.get_novel_page(novel_id, chap_idx, page, user='default')
     page_text=page_text.replace('\n','<br/>')

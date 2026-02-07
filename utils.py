@@ -41,15 +41,36 @@ def get_db():
 
 def init_db():
     conn = get_db()
+    # Create table with new columns if not exists
     conn.execute('''
     CREATE TABLE IF NOT EXISTS novels (
         id INTEGER PRIMARY KEY,
         filename TEXT,
         path TEXT UNIQUE,
         first100 TEXT,
-        added_at TEXT
+        added_at TEXT,
+        size INTEGER,
+        chars INTEGER
     )
     ''')
+    # Ensure columns exist for older DBs: add if missing
+    cur = conn.execute("PRAGMA table_info('novels')")
+    cols = [r[1] for r in cur.fetchall()]
+    if 'size' not in cols:
+        try:
+            conn.execute('ALTER TABLE novels ADD COLUMN size INTEGER')
+        except Exception:
+            pass
+    if 'chars' not in cols:
+        try:
+            conn.execute('ALTER TABLE novels ADD COLUMN chars INTEGER')
+        except Exception:
+            pass
+    # Create an index on filename for faster lookup
+    try:
+        conn.execute('CREATE INDEX IF NOT EXISTS idx_novels_filename ON novels(filename)')
+    except Exception:
+        pass
     conn.commit()
     conn.close()
 
@@ -163,10 +184,16 @@ def index_file(file_path: Path):
     except Exception as e:
         return False, f'read error: {e}'
     first100 = ' '.join(text.strip().split())[:100]
+    size = None
+    try:
+        size = file_path.stat().st_size
+    except Exception:
+        size = None
+    chars = len(text)
     conn = get_db()
     conn.execute(
-        'REPLACE INTO novels (filename, path, first100, added_at) VALUES (?,?,?,?)',
-        (file_path.name, str(file_path.resolve()), first100, datetime.datetime.utcnow().isoformat())
+        'REPLACE INTO novels (filename, path, first100, added_at, size, chars) VALUES (?,?,?,?,?,?)',
+        (file_path.name, str(file_path.resolve()), first100, datetime.datetime.utcnow().isoformat(), size, chars)
     )
     conn.commit()
     conn.close()

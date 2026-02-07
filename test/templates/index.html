@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 小说语义搜索</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <style>
+        [v-cloak] { display: none; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #4f46e5;
+            border-radius: 50%;
+            width: 18px;
+            height: 18px;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-900 font-sans">
+    <div id="app" v-cloak class="max-w-4xl mx-auto p-4 md:p-8">
+        
+        {% raw %}
+        
+        <header class="text-center mb-10">
+            <h1 class="text-4xl font-extrabold text-indigo-600 mb-2">📚 语义藏经阁</h1>
+            <p class="text-slate-500">输入情节描述，AI 为你检索最接近的小说片段</p>
+        </header>
+
+        <div class="relative max-w-2xl mx-auto mb-8">
+            <input 
+                v-model="query" 
+                @keyup.enter="doSearch"
+                type="text" 
+                placeholder="例如：男主重生回到过去，决定靠卖奶茶发家致富" 
+                class="w-full p-4 pl-6 pr-28 text-md border border-slate-200 rounded-2xl shadow-lg focus:ring-2 focus:ring-indigo-500 outline-none transition-all"
+            >
+            <button 
+                @click="doSearch"
+                :disabled="loading"
+                class="absolute right-2 top-2 bottom-2 px-6 bg-indigo-600 text-white rounded-xl font-medium hover:bg-indigo-700 disabled:bg-slate-300 transition-colors flex items-center gap-2"
+            >
+                <div v-if="loading" class="loading-spinner border-white/30 border-t-white"></div>
+                <span>{{ loading ? '识别中' : '搜索' }}</span>
+            </button>
+        </div>
+
+        <div v-if="hasSearched" class="flex justify-between px-2 mb-4 text-xs font-bold text-slate-400 uppercase tracking-widest">
+            <span>找到 {{ results.length }} 条匹配</span>
+            <span>耗时 {{ timeCost.toFixed(4) }}s</span>
+        </div>
+
+        <div class="space-y-4">
+            <div 
+                v-for="(item, index) in results" 
+                :key="index" 
+                class="fade-in bg-white p-6 rounded-2xl shadow-sm border border-slate-100 hover:border-indigo-200 transition-all"
+            >
+                <div class="flex justify-between items-start mb-3">
+                    <h3 class="text-lg font-bold text-slate-800">{{ item.filename }}</h3>
+                    <span class="text-xs font-mono bg-indigo-50 text-indigo-600 px-2 py-1 rounded">
+                        MATCH: {{ item.match_percent }}%
+                    </span>
+                </div>
+                <p class="text-slate-600 text-sm leading-relaxed mb-4 line-clamp-3">
+                    {{ item.preview }}
+                </p>
+                <div class="w-full bg-slate-100 h-1 rounded-full overflow-hidden">
+                    <div class="bg-indigo-500 h-full transition-all duration-700" :style="{ width: item.match_percent + '%' }"></div>
+                </div>
+            </div>
+
+            <div v-if="hasSearched && results.length === 0" class="text-center py-20 text-slate-400">
+                <p class="text-lg">未能匹配到相关书籍，请尝试精简描述</p>
+            </div>
+        </div>
+        
+        {% endraw %}
+        
+    </div>
+
+    <script>
+        const { createApp } = Vue
+        createApp({
+            data() {
+                return {
+                    query: '',
+                    results: [],
+                    timeCost: 0,
+                    loading: false,
+                    hasSearched: false
+                }
+            },
+            methods: {
+                async doSearch() {
+                    if (!this.query.trim() || this.loading) return;
+                    this.loading = true;
+                    try {
+                        const res = await fetch('/api/search', {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({ query: this.query, top_k: 10 })
+                        });
+                        const data = await res.json();
+                        if (data.status === 'success') {
+                            this.results = data.data;
+                            this.timeCost = data.time;
+                        }
+                    } catch (e) {
+                        console.error('Search failed', e);
+                    } finally {
+                        this.loading = false;
+                        this.hasSearched = true;
+                    }
+                }
+            }
+        }).mount('#app')
+    </script>
+</body>
+</html>

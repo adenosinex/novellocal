@@ -25,7 +25,7 @@ import utils
 def list_novels(page=1, page_size=20, with_total=False):
     conn = utils.get_db()
     offset = (page - 1) * page_size
-    cur = conn.execute('SELECT id, filename, first100, added_at FROM novels ORDER BY added_at DESC LIMIT ? OFFSET ?', (page_size, offset))
+    cur = conn.execute('SELECT id, filename, first100, added_at, size, chars FROM novels ORDER BY added_at DESC LIMIT ? OFFSET ?', (page_size, offset))
     novels = cur.fetchall()
     total = None
     if with_total:
@@ -59,7 +59,7 @@ def index_path(path_str):
 # 搜索小说
 
 def search_novels(q_filename, q_text):
-    sql = 'SELECT id, filename, first100, added_at,path FROM novels'
+    sql = 'SELECT id, filename, first100, added_at, path, size, chars FROM novels'
     clauses = []
     params = []
     if q_filename:

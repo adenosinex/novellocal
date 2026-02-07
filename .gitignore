@@ -6,3 +6,5 @@ ss_顶点 me.json
 规则书源.txt
 sources/232_dingdian_me.json
 sources/caimoge_mobile.json
+*.db
+*.index
